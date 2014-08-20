@@ -1,0 +1,20 @@
+#Table of CODATA Constants, based on the 2010 Revision
+#Mohr, Taylor, and Newell, Rev. Mod. Phys., vol. 84, pp. 1527-1605, (2012).
+h_Planck = 6.62606957e-34 #J*sec (Planck Constant)
+kB = 1.3806488e-23 #J/K (Boltzmann Constant)
+el = 1.602176565e-19 #C (Elementary Charge)
+amu = 1.660538921e-27 #kg (Unified Atomic Mass Unit)
+Na = 6.02214129e23 #1/mol (Avogadro Constant)
+eps0 = 8.854187817e-12 #F/m (permitivity of vacuum)
+
+eV = 1.602176565e-19 #J (Electron Volt)
+c = 299792458e0 #m/s (Speed of Light in a Vacuum)
+G = 6.67384e-11 #m^3/kg/s (Gravitational Constant)
+sigma = 5.670373e-8 # W/m^2/K^4 (Stefan-Boltzmann Constant)
+R = 8.3144621 #J/mol/K (Molar Gas Constant)
+F = 96485.3365 #C/mol (Faraday Constant)
+Rinf = 10973731.568539 #1/m (Rydberg Constant)
+alpha = 7.2973525698e-3 # (Fine Structure Constant)
+me = 9.10938291e-31 #kg (Electron Mass)
+mp = 1.672621777e-27 #kg (Proton Mass)
+mu0 = 12.566370614e-7 #N/A^2 (Magnetic Constant)
