@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 #Modules
-import csv,math,sys,os
+import math
 
 #-----------------------------------------------------------------
 # Routine to reweight a macrostate distribution (like a subroutine)
