@@ -5,7 +5,7 @@
 #   Technology by employees of the Federal Government in the course of their
 #   official duties. Pursuant to Title 17 Section 105 of the United States 
 #   Code this software is not subject to copyright protection and is in the 
-#   public domain. EOS.py is an experimental system. NIST assumes no
+#   public domain. NVT_EOS.py is an experimental system. NIST assumes no
 #   responsibility whatsoever for its use by other parties, and makes no
 #   guarantees, expressed or implied, about its quality, reliability, or any
 #   other characteristic. We would appreciate acknowledgement if the software
@@ -16,74 +16,56 @@
 #   any modified versions bear some notice that they have been modified.
 #
 #-----------------------------------------------------------------------------
-#   Software Name: EOS.py
+#   Software Name: NVT_EOS.py
 #   Brief Description: Script to compute the density-pressure equation
-#    of state from a particle-number probability distribution
+#    of state from a particle-number probability distribution. This
+#    method yields an isotherm that contains stable, metastable, and
+#    unstable state points.
 #   Author: Daniel W. Siderius, PhD
 #   Contact Information: daniel.siderius@nist.gov
 #
+#   Computation of the equation of state is based on a method discussed by
+#    Shen and Errington in J. Phys. Chem. B, 108(51):19595-19606, (2004).
+#    The method is presented on page 19598 in equations 12-19.
+#
 #   Version History:
 #
-#   Version: 0.91
-#   Release Date: 20 August 2012
+#   Version: 1.0
+#   Release Date: 27 August 2012
 #   Notes: Original version
 #-----------------------------------------------------------------------------
 
 #Modules
-import csv,math,sys,os,shutil
+import math,sys,os,shutil, csv
 import scipy.interpolate
-import xml.dom.minidom as minidom
 import CODATA_2010_Constants as CODATA
+from Read_TMMC_CSV_Data import *
+from Renormalize_lnPi import *
+from Parse_Standard_XML_Data import *
 
 #Directories and Files
-work_dir = './tmp'
+work_dir = './tmp/'
 input_filename = str(sys.argv[1])
-meta_data = work_dir+'/meta_data.xml'
+meta_data = work_dir+'meta_data.xml'
 
-#Unpack the data bundle
+# Unpack the data bundle & read the XML metadata
 print 'Unpacking TMMC data in '+str(sys.argv[1])
 if not os.path.exists(work_dir): os.makedirs(work_dir)
 os.system( 'cd '+work_dir+' ; tar -xzf ../'+input_filename )
-
-#Parse the meta data
-dom = minidom.parse( meta_data )
-temperature = float(dom.getElementsByTagName('temperature')[0].firstChild.data)
-lnZ = float(dom.getElementsByTagName('log_activity')[0].firstChild.data)
-volume = float(dom.getElementsByTagName('volume')[0].firstChild.data)
-fileprefix = dom.getElementsByTagName('file_prefix')[0].firstChild.data
+(temperature,lnZ,volume,fileprefix,units_type) = Parse_Standard_XML_data(meta_data)
 
 #Convert from log(activity) to chemical potential
 mu = temperature * lnZ
 
-#Read in the Macrostate Distribution Data
-macrostate_filename = work_dir+'/'+fileprefix+'lnpi.csv'
-macrostate_file = open(macrostate_filename,'r')
-reader = csv.reader(macrostate_file)
-N = [ ]
-lnPi = [ ]
-sumPi = 0.0
-for row in reader:
-    N.append(int(row[0]))
-    lnPi.append(float(row[1]))
-    sumPi = sumPi + math.exp(float(row[1]))
-Nmax = int(row[0])
-macrostate_file.close()
-
-#Error checking 
- #Confirm that the zero-density limit is sampled
-if N[0] != 0:
-    print 'error'
- #Confirm that lnPi[Nmax] is sufficiently small ( <= lnPi_max-10 )
-
-#Pi(N) normalization (just to be sure)
-for row in N:
-    lnPi[row] = lnPi[row] - math.log(sumPi)
-sumPi = 1.0
+# Read in the Macrostate Probability Distribution Data, get N bounds, and normalize lnPi
+(N,lnPi) = Read_TMMC_CSV_Data(fileprefix,work_dir,'lnpi')
+N_max = N[-1]; N_min = N[0]
+(lnPi,sumPi) = Renormalize(lnPi,shift=True) #Make sure shift=False, otherwise the EOS will be wrong
 
 #Calculation of the Helmholtz Free Energy
 FofNVT = [ ]
 for row in N:
-    FofNVT.append( mu * float(N[row]) + temperature * (-lnPi[row] - math.log(sumPi) + lnPi[0]) )
+    FofNVT.append( mu * float(N[row]) + temperature * (-lnPi[row] + lnPi[0]) )
 
 #Calculation of the N-V-T Ensemble Chemical Potential
 print 'Using SciPy spline routine for numerical derivatives'
