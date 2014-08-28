@@ -52,7 +52,15 @@ meta_data = work_dir+'meta_data.xml'
 print 'Unpacking TMMC data in '+str(sys.argv[1])
 if not os.path.exists(work_dir): os.makedirs(work_dir)
 os.system( 'cd '+work_dir+' ; tar -xzf ../'+input_filename )
-(temperature,lnZ,volume,fileprefix,units_type) = Parse_Standard_XML_data(meta_data)
+XML_input = Parse_Standard_XML_data(meta_data)
+temperature = XML_input[0]
+lnZ = XML_input[1]
+volume = XML_input[2]
+fileprefix = XML_input[3]
+units_type = XML_input[4]
+if units_type == 'Absolute':
+    LJ_sigma = XML_input[5]
+    LJ_epsilon_kB = XML_input[6]
 
 #Convert from log(activity) to chemical potential
 mu = temperature * lnZ
