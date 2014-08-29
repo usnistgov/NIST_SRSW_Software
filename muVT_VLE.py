@@ -29,7 +29,7 @@
 #   Version History:
 #
 #   Version: 1.0
-#   Release Date: 28 August 2012
+#   Release Date: 29 August 2012
 #   Notes: Original version
 #-----------------------------------------------------------------------------
 
