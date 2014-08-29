@@ -232,25 +232,49 @@ print
 saturation_output_filename = fileprefix+'sat.txt'
 saturation_output = open(saturation_output_filename,'wb')
 print '   Saturation Conditions'
-print '{:^20}'.format('lnZ') +'  {:^20}'.format('p(1)*') +'  {:^20}'.format('p(2)*') +'  {:^20}'.format('rho(1)*') \
-    +'  {:^20}'.format('rho(2)*') +'  {:^20}'.format('u(1)*') +'  {:^20}'.format('u(2)*')
 if units_type == 'Reduced':
-    saturation_output.write('          kT*lnZ                 p(1)*                  p(2)*              rho(1)*'+
+    # Print to Screen
+    print '{:^20}'.format('lnZ') +'  {:^20}'.format('p(1)*') +'  {:^20}'.format('p(2)*') +'  {:^20}'.format('rho(1)*') \
+        +'  {:^20}'.format('rho(2)*') +'  {:^20}'.format('u(1)*') +'  {:^20}'.format('u(2)*')
+    print '{:20.10e}'.format(mu_test/temperature) +'  {:20.10e}'.format(pressure[0]) \
+               +'  {:20.10e}'.format(pressure[1]) +'  {:20.10e}'.format(nmols[0]/volume) \
+               +'  {:20.10e}'.format(nmols[1]/volume) +'  {:20.10e}'.format(U[0]/nmols[0]) \
+               +'  {:20.10e}'.format(U[1]/nmols[1])
+ 
+    # Write to File
+    saturation_output.write('            lnZ                  p(1)*                  p(2)*              rho(1)*'+
                             '                rho(2)*                 u(1)*             u(2)* \n')
-    saturation_output.write('{:20.10e}'.format(mu_test) +'  {:20.10e}'.format(pressure[0])
+    saturation_output.write('{:20.10e}'.format(mu_test/temperature) +'  {:20.10e}'.format(pressure[0])
                             +'  {:20.10e}'.format(pressure[1]) +'  {:20.10e}'.format(nmols[0]/volume) 
                             +'  {:20.10e}'.format(nmols[1]/volume) +'  {:20.10e}'.format(U[0]/nmols[0]) 
                             +'  {:20.10e}'.format(U[1]/nmols[1]) +'\n')
-    saturation_output.close()
-
-    print '{:20.10e}'.format(mu_test) +'  {:20.10e}'.format(pressure[0]) +'  {:20.10e}'.format(pressure[1]) \
-        +'  {:20.10e}'.format(nmols[0]/volume) +'  {:20.10e}'.format(nmols[1]/volume) \
-        +'  {:20.10e}'.format(U[0]/nmols[0]) +'  {:20.10e}'.format(U[1]/nmols[1]) +'\n'
+#    print '{:20.10e}'.format(mu_test/temperature) +'  {:20.10e}'.format(pressure[0]) +'  {:20.10e}'.format(pressure[1]) \
+#        +'  {:20.10e}'.format(nmols[0]/volume) +'  {:20.10e}'.format(nmols[1]/volume) \
+#        +'  {:20.10e}'.format(U[0]/nmols[0]) +'  {:20.10e}'.format(U[1]/nmols[1]) +'\n'
 else:
-    print '{:20.10e}'.format(mu_test) +'  {:20.10e}'.format(pressure[0]*pressure_scale) \
+    # Print to Screen
+    print '{:^20}'.format('lnZ') +'  {:^20}'.format('p(1) (bar)') +'  {:^20}'.format('p(2) (bar)') \
+        +'  {:^20}'.format('rho(1) (mol/m3)') +'  {:^20}'.format('rho(2) (mol/m3)') \
+        +'  {:^20}'.format('u(1) (kJ/mol)') +'  {:^20}'.format('u(2) (kJ/mol)')
+    print '{:20.10e}'.format(mu_test*LJ_epsilon_kB/temperature) +'  {:20.10e}'.format(pressure[0]*pressure_scale) \
         +'  {:20.10e}'.format(pressure[1]*pressure_scale) +'  {:20.10e}'.format(nmols[0]/volume*density_scale) \
         +'  {:20.10e}'.format(nmols[1]/volume*density_scale) +'  {:20.10e}'.format(U[0]/nmols[0]*energy_scale) \
         +'  {:20.10e}'.format(U[1]/nmols[1]*energy_scale)
+
+    #Write to File
+    saturation_output.write('{:^20}'.format('lnZ') +'  {:^20}'.format('p(1) (bar)')
+                            +'  {:^20}'.format('p(2) (bar)') +'  {:^20}'.format('rho(1) (mol/m3)') 
+                            +'  {:^20}'.format('rho(2) (mol/m3)') +'  {:^20}'.format('u(1) (kJ/mol)') 
+                            +'  {:^20}'.format('u(2) (kJ/mol)' + '\n') )
+    saturation_output.write('{:20.10e}'.format(mu_test*LJ_epsilon_kB/temperature) 
+                            +'  {:20.10e}'.format(pressure[0]*pressure_scale) 
+                            +'  {:20.10e}'.format(pressure[1]*pressure_scale) 
+                            +'  {:20.10e}'.format(nmols[0]/volume*density_scale)
+                            +'  {:20.10e}'.format(nmols[1]/volume*density_scale) 
+                            +'  {:20.10e}'.format(U[0]/nmols[0]*energy_scale)
+                            +'  {:20.10e}'.format(U[1]/nmols[1]*energy_scale) +'\n' )
+
+saturation_output.close()
 
 #File Cleanup
 shutil.rmtree(work_dir)
