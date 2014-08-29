@@ -29,13 +29,14 @@
 #   Version History:
 #
 #   Version: 1.0
-#   Release Date: 27 August 2012
+#   Release Date: 28 August 2012
 #   Notes: Original version
 #-----------------------------------------------------------------------------
 
 #Modules
 import sys,os,shutil,numpy, csv
 from scipy.signal import argrelextrema
+from CODATA_2010_Constants import *
 from Reweight_lnPi import *
 from Bulk_Calculate_Properties import *
 from Read_TMMC_CSV_Data import *
@@ -51,11 +52,29 @@ meta_data = work_dir+'metadata.xml'
 print 'Unpacking TMMC data in '+str(sys.argv[1])
 if not os.path.exists(work_dir): os.makedirs(work_dir)
 os.system( 'cd '+work_dir+' ; tar -xzf ../'+input_filename )
-(temperature,lnZ,volume,fileprefix,units_type) = Parse_Standard_XML_data(meta_data)
+XML_input = Parse_Standard_XML_data(meta_data)
+temperature = XML_input[0]
+lnZ = XML_input[1]
+volume = XML_input[2]
+fileprefix = XML_input[3]
+units_type = XML_input[4]
+if units_type == 'Absolute':
+    LJ_sigma = XML_input[5]
+    LJ_epsilon_kB = XML_input[6]
 
 # Useful Conversions
-mu = temperature * lnZ #log(activity) -> chemical potential
-beta = 1.0e0 / temperature
+if units_type == 'Reduced':
+    mu = temperature * lnZ #log(activity) -> chemical potential
+    beta = 1.0e0 / temperature
+else:
+    # Convert *back* to reduced units for simplicity
+    mu = temperature * lnZ / LJ_epsilon_kB #log(activity) -> chemical potential
+    beta = LJ_epsilon_kB / temperature
+    volume = volume / (LJ_sigma**3)
+    # Scaling Variables
+    pressure_scale = LJ_epsilon_kB * kB / (LJ_sigma**3) * 1.0e30 / 1.0e5 #Converts to bar units
+    density_scale = 1.0e0 / (LJ_sigma**3) * 1.0e30 / Na #Converts to mol/m3
+    energy_scale = LJ_epsilon_kB * kB * Na / 1.0e3 #Converts to kJ/mol
 
 # Read in the Macrostate Probability Distribution Data, get N bounds, and normalize lnPi
 (N,lnPi) = Read_TMMC_CSV_Data(fileprefix,work_dir,'lnpi')
@@ -64,6 +83,7 @@ N_max = N[-1]; N_min = N[0]
 
 # Read in the Canonical Ensemble Energy Data
 (Ntemp,energy) = Read_TMMC_CSV_Data(fileprefix,work_dir,'energy')
+if units_type == 'Absolute': energy = [ x/LJ_epsilon_kB for x in energy ]
 
 # Set default values for search criteria
 tolerance = 1.0e-14
@@ -169,6 +189,7 @@ while not solved:
 
 #Final Checks
 lnPi_new = Reweight_lnPi(lnPi_old,N,beta,mu,mu_test)
+(nmols, pressure, U, GPFE) = Bulk_Calculate_Properties(lnPi_new,energy,N,mu_new,volume,beta,min_N)
 maxima = argrelextrema(numpy.array(lnPi_new),numpy.greater)
 minima = argrelextrema(numpy.array(lnPi_new),numpy.less)
 # Check that the saturation lnPi has a sufficiently small high-N tail
@@ -206,16 +227,30 @@ lnpi_output.close()
 print
 print 'lnPi Macrostate Distribution at Coexistence output as '+str(lnpi_output_filename)
 print
+
 # Saturation conditions
 saturation_output_filename = fileprefix+'sat.txt'
 saturation_output = open(saturation_output_filename,'wb')
-saturation_output.write('          kT*lnZ                 p(1)*                  p(2)*             rho(1)*                rho(2)*                 u(1)*             u(2)* \n')
-saturation_output.write('{:20.10e}'.format(mu_test) +'  {:20.10e}'.format(pressure[0]) +'  {:20.10e}'.format(pressure[1]) +'  {:20.10e}'.format(nmols[0]/volume) +'  {:20.10e}'.format(nmols[1]/volume) +'  {:20.10e}'.format(U[0]/nmols[0]) +'  {:20.10e}'.format(U[1]/nmols[1]) +'\n')
-saturation_output.close()
-
 print '   Saturation Conditions'
-print '          kT*lnZ                 p(1)*                  p(2)*             rho(1)*                rho(2)*                 u(1)*             u(2)* '
-print '{:20.10e}'.format(mu_test) +'  {:20.10e}'.format(pressure[0]) +'  {:20.10e}'.format(pressure[1]) +'  {:20.10e}'.format(nmols[0]/volume) +'  {:20.10e}'.format(nmols[1]/volume) +'  {:20.10e}'.format(U[0]/nmols[0]) +'  {:20.10e}'.format(U[1]/nmols[1]) +'\n'
+print '{:^20}'.format('lnZ') +'  {:^20}'.format('p(1)*') +'  {:^20}'.format('p(2)*') +'  {:^20}'.format('rho(1)*') \
+    +'  {:^20}'.format('rho(2)*') +'  {:^20}'.format('u(1)*') +'  {:^20}'.format('u(2)*')
+if units_type == 'Reduced':
+    saturation_output.write('          kT*lnZ                 p(1)*                  p(2)*              rho(1)*'+
+                            '                rho(2)*                 u(1)*             u(2)* \n')
+    saturation_output.write('{:20.10e}'.format(mu_test) +'  {:20.10e}'.format(pressure[0])
+                            +'  {:20.10e}'.format(pressure[1]) +'  {:20.10e}'.format(nmols[0]/volume) 
+                            +'  {:20.10e}'.format(nmols[1]/volume) +'  {:20.10e}'.format(U[0]/nmols[0]) 
+                            +'  {:20.10e}'.format(U[1]/nmols[1]) +'\n')
+    saturation_output.close()
+
+    print '{:20.10e}'.format(mu_test) +'  {:20.10e}'.format(pressure[0]) +'  {:20.10e}'.format(pressure[1]) \
+        +'  {:20.10e}'.format(nmols[0]/volume) +'  {:20.10e}'.format(nmols[1]/volume) \
+        +'  {:20.10e}'.format(U[0]/nmols[0]) +'  {:20.10e}'.format(U[1]/nmols[1]) +'\n'
+else:
+    print '{:20.10e}'.format(mu_test) +'  {:20.10e}'.format(pressure[0]*pressure_scale) \
+        +'  {:20.10e}'.format(pressure[1]*pressure_scale) +'  {:20.10e}'.format(nmols[0]/volume*density_scale) \
+        +'  {:20.10e}'.format(nmols[1]/volume*density_scale) +'  {:20.10e}'.format(U[0]/nmols[0]*energy_scale) \
+        +'  {:20.10e}'.format(U[1]/nmols[1]*energy_scale)
 
 #File Cleanup
 shutil.rmtree(work_dir)
