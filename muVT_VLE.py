@@ -101,8 +101,8 @@ if len(sys.argv) > 2:
         if optional_dom.getElementsByTagName('lnPi_threshold'):
             lnPi_threshold = float(optional_dom.getElementsByTagName('lnPi_threshold')[0].firstChild.data)
             print 'Using delta(lnPi) threshold = '+str(lnPi_threshold)
-        if optional_dom.getElementsByTagName('mu_guess'):
-            mu_new = float(optional_dom.getElementsByTagName('mu_guess')[0].firstChild.data)
+        if optional_dom.getElementsByTagName('lnZ_guess'):
+            mu_new = temperature * float(optional_dom.getElementsByTagName('lnZ_guess')[0].firstChild.data)
             print 'Using first guess of coexistence mu* = '+str(mu_new)
         if optional_dom.getElementsByTagName('midpoint'):
             midpoint = float(optional_dom.getElementsByTagName('midpoint')[0].firstChild.data)
