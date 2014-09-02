@@ -46,7 +46,7 @@ from Parse_Standard_XML_Data import *
 #Directories and Files
 work_dir = './tmp/'
 input_filename = str(sys.argv[1])
-meta_data = work_dir+'meta_data.xml'
+meta_data = work_dir+'metadata.xml'
 
 # Unpack the data bundle & read the XML metadata
 print 'Unpacking TMMC data in '+str(sys.argv[1])
